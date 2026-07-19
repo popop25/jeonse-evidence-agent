@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import math
 import re
@@ -77,6 +78,7 @@ class PersistentChromaAzureBackend:
         self._collection_name = collection_name
         self._chroma_client_factory = chroma_client_factory
         self._collection: Any | None = None
+        self._operation_lock = asyncio.Lock()
 
     def _get_collection(self) -> Any:
         if self._collection is not None:
@@ -107,7 +109,12 @@ class PersistentChromaAzureBackend:
         document_ids = [document.document_id for document in documents]
         if len(document_ids) != len(set(document_ids)):
             raise ValueError("Vector document IDs must be unique")
+        async with self._operation_lock:
+            await asyncio.to_thread(self._upsert_documents_sync, documents)
+
+    def _upsert_documents_sync(self, documents: tuple[VectorDocument, ...]) -> None:
         collection = self._get_collection()
+        document_ids = [document.document_id for document in documents]
         existing = collection.get(ids=document_ids, include=["metadatas"])
         existing_ids = set(existing.get("ids", ()))
         missing = [document for document in documents if document.document_id not in existing_ids]
@@ -131,6 +138,12 @@ class PersistentChromaAzureBackend:
         )
 
     async def search_documents(self, query: VectorSearchQuery) -> tuple[VectorSearchMatch, ...]:
+        async with self._operation_lock:
+            return await asyncio.to_thread(self._search_documents_sync, query)
+
+    def _search_documents_sync(
+        self, query: VectorSearchQuery
+    ) -> tuple[VectorSearchMatch, ...]:
         collection = self._get_collection()
         query_embedding = self._provider.embed_query(query.query_text)
         result = collection.query(

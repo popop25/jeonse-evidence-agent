@@ -15,6 +15,7 @@ import jeonse_support.api as api_module
 import jeonse_support.service as service_module
 
 from jeonse_support.api import _snapshot_adapters, create_app
+from jeonse_support.graph import build_workflow
 from jeonse_support.models import (
     AnalysisStatus,
     FitLevel,
@@ -25,7 +26,12 @@ from jeonse_support.models import (
     TemporalProvenance,
 )
 from jeonse_support.service import AnalysisRecord
-from jeonse_support.rag import AllowlistedOfficialDocumentRepository, SemanticOfficialDocumentRepository
+from jeonse_support.rag import (
+    AllowlistedOfficialDocumentRepository,
+    SemanticOfficialDocumentRepository,
+    official_guidance_documents,
+)
+from jeonse_support.repositories import OfficialDocument, OfficialDocumentQuery
 
 
 @pytest.fixture
@@ -530,6 +536,31 @@ def test_evidence_gate_needs_review_has_safe_reason_and_no_report(
     unavailable = client.get(f"/api/v1/analyses/{analysis_id}/report")
     assert unavailable.status_code == 409
     assert unavailable.json()["detail"]["code"] == "EVIDENCE_GATE_FAILED"
+def test_bundled_guidance_cannot_satisfy_contract_prep(
+    client: TestClient,
+) -> None:
+    service = client.app.state.analysis_service
+
+    async def retrieve_bundled(
+        _query: OfficialDocumentQuery,
+    ) -> tuple[OfficialDocument, ...]:
+        return official_guidance_documents()[:1]
+
+    service._workflow = build_workflow(retrieve_bundled)
+    admitted = client.post(
+        "/api/v1/analyses",
+        json={"session_id": "bundled-guidance", "listing_id": "listing-mapogu-low"},
+    )
+    analysis_id = admitted.json()["analysis_id"]
+    terminal = _completed(client, analysis_id)
+
+    assert terminal["status"] == "needs_review"
+    assert terminal["error"]["code"] == "EVIDENCE_GATE_FAILED"
+    assert "report_id" not in terminal
+    record = service.get_analysis(analysis_id)
+    assert record is not None
+    assert "NON_OFFICIAL_GUIDANCE_EVIDENCE" in record.ai_trace_codes
+
 def test_completed_fallback_status_is_report_bearing_and_retains_memory(
     client: TestClient, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

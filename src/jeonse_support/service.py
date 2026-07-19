@@ -865,6 +865,8 @@ class AnalysisService:
         evidence_by_id = {item.evidence_id: item for item in report.evidence}
         if len(evidence_by_id) != len(report.evidence):
             return "DUPLICATE_EVIDENCE"
+        if any(item.kind is EvidenceKind.BUNDLED_GUIDANCE for item in report.evidence):
+            return "NON_OFFICIAL_GUIDANCE_EVIDENCE"
         for result in results:
             if result.status is not AnalysisStatus.COMPLETED or not result.evidence_ids:
                 return "INCOMPLETE_ROLE_RESULT"
@@ -878,6 +880,18 @@ class AnalysisService:
                 not item.excerpt or not item.content_hash
             ):
                 return "UNVERIFIABLE_OFFICIAL_EVIDENCE"
+        contract_prep = results[2]
+        if any(
+            item.status is not ChecklistStatus.UNAVAILABLE
+            for item in contract_prep.checklist_items
+        ) and (
+            not contract_prep.evidence_ids
+            or any(
+                evidence_by_id[evidence_id].kind is not EvidenceKind.OFFICIAL_DOCUMENT
+                for evidence_id in contract_prep.evidence_ids
+            )
+        ):
+            return "NON_OFFICIAL_CONTRACT_PREP_EVIDENCE"
         for claim in report.claims:
             if not set(claim.evidence_ids).issubset(evidence_by_id):
                 return "UNRESOLVED_CLAIM_EVIDENCE"
@@ -969,6 +983,7 @@ class AnalysisService:
             policy_snapshot_evidence=assessment.snapshot_evidence,
             limitations=(
                 "Snapshot data is non-live and may be incomplete or changed after its as-of date.",
+                "Bundled listing, transaction, and HUG fixtures are synthetic demo data, not real listings or official records.",
                 "No live rights, building-register, or landlord verification is performed.",
                 "No official contract checklist evidence is available."
                 if not any(item.kind is EvidenceKind.OFFICIAL_DOCUMENT for item in official_evidence)
