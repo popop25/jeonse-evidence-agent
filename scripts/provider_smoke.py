@@ -45,12 +45,15 @@ def main() -> None:
         if result["ids"] != [["smoke-document"]]:
             raise RuntimeError("Chroma persistence/query smoke failed")
 
+    presentation_valid = bool(presentation.presentation.summary)
+    evidence_bound = presentation.presentation.evidence_ids == (evidence_id,)
+    status = "PASS" if presentation_valid and evidence_bound else "FAIL"
     receipt = {
-        "status": "PASS",
+        "status": status,
         "profile": "azure-openai-chroma-smoke-v1",
         "chat": {
-            "presentation_valid": bool(presentation.presentation.summary),
-            "evidence_bound": presentation.presentation.evidence_ids == (evidence_id,),
+            "presentation_valid": presentation_valid,
+            "evidence_bound": evidence_bound,
         },
         "embedding": {"dimension": len(vector), "non_empty": True},
         "chroma": {"persist_reopen_query": "PASS", "count": 1},
@@ -60,6 +63,8 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(receipt, ensure_ascii=False))
+    if status != "PASS":
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
