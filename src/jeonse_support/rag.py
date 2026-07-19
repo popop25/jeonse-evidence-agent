@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import math
 import re
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Protocol, Sequence
@@ -78,7 +79,7 @@ class PersistentChromaAzureBackend:
         self._collection_name = collection_name
         self._chroma_client_factory = chroma_client_factory
         self._collection: Any | None = None
-        self._operation_lock = asyncio.Lock()
+        self._operation_lock = threading.Lock()
 
     def _get_collection(self) -> Any:
         if self._collection is not None:
@@ -109,10 +110,13 @@ class PersistentChromaAzureBackend:
         document_ids = [document.document_id for document in documents]
         if len(document_ids) != len(set(document_ids)):
             raise ValueError("Vector document IDs must be unique")
-        async with self._operation_lock:
-            await asyncio.to_thread(self._upsert_documents_sync, documents)
+        await asyncio.to_thread(self._upsert_documents_sync, documents)
 
     def _upsert_documents_sync(self, documents: tuple[VectorDocument, ...]) -> None:
+        with self._operation_lock:
+            self._upsert_documents_unlocked(documents)
+
+    def _upsert_documents_unlocked(self, documents: tuple[VectorDocument, ...]) -> None:
         collection = self._get_collection()
         document_ids = [document.document_id for document in documents]
         existing = collection.get(ids=document_ids, include=["metadatas"])
@@ -138,10 +142,15 @@ class PersistentChromaAzureBackend:
         )
 
     async def search_documents(self, query: VectorSearchQuery) -> tuple[VectorSearchMatch, ...]:
-        async with self._operation_lock:
-            return await asyncio.to_thread(self._search_documents_sync, query)
+        return await asyncio.to_thread(self._search_documents_sync, query)
 
     def _search_documents_sync(
+        self, query: VectorSearchQuery
+    ) -> tuple[VectorSearchMatch, ...]:
+        with self._operation_lock:
+            return self._search_documents_unlocked(query)
+
+    def _search_documents_unlocked(
         self, query: VectorSearchQuery
     ) -> tuple[VectorSearchMatch, ...]:
         collection = self._get_collection()

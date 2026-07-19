@@ -881,10 +881,24 @@ class AnalysisService:
             ):
                 return "UNVERIFIABLE_OFFICIAL_EVIDENCE"
         contract_prep = results[2]
-        if any(
-            item.status is not ChecklistStatus.UNAVAILABLE
+        if not contract_prep.checklist_items:
+            return "MISSING_CONTRACT_PREP_CHECKLIST"
+        available_items = tuple(
+            item
             for item in contract_prep.checklist_items
-        ) and (
+            if item.status is not ChecklistStatus.UNAVAILABLE
+        )
+        for item in available_items:
+            if not item.evidence_ids:
+                return "MISSING_CONTRACT_PREP_ITEM_EVIDENCE"
+            if not set(item.evidence_ids).issubset(evidence_by_id):
+                return "UNRESOLVED_CONTRACT_PREP_ITEM_EVIDENCE"
+            if any(
+                evidence_by_id[evidence_id].kind is not EvidenceKind.OFFICIAL_DOCUMENT
+                for evidence_id in item.evidence_ids
+            ):
+                return "NON_OFFICIAL_CONTRACT_PREP_ITEM_EVIDENCE"
+        if available_items and (
             not contract_prep.evidence_ids
             or any(
                 evidence_by_id[evidence_id].kind is not EvidenceKind.OFFICIAL_DOCUMENT

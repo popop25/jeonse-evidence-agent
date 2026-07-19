@@ -18,6 +18,9 @@ from jeonse_support.api import _snapshot_adapters, create_app
 from jeonse_support.graph import build_workflow
 from jeonse_support.models import (
     AnalysisStatus,
+    ChecklistStatus,
+    Evidence,
+    EvidenceKind,
     FitLevel,
     NormalizedUserConditions,
     RetainedListing,
@@ -560,6 +563,77 @@ def test_bundled_guidance_cannot_satisfy_contract_prep(
     record = service.get_analysis(analysis_id)
     assert record is not None
     assert "NON_OFFICIAL_GUIDANCE_EVIDENCE" in record.ai_trace_codes
+
+def test_contract_prep_items_require_resolved_official_evidence(
+    client: TestClient,
+) -> None:
+    service = client.app.state.analysis_service
+    admitted = client.post(
+        "/api/v1/analyses",
+        json={"session_id": "checklist-evidence", "listing_id": "listing-mapogu-low"},
+    )
+    analysis_id = admitted.json()["analysis_id"]
+    assert _completed(client, analysis_id)["status"] == "completed"
+    record = service.get_analysis(analysis_id)
+    report = service.get_report(analysis_id)
+    assert record is not None and report is not None
+
+    official = Evidence(
+        evidence_id="evidence-official-test",
+        kind=EvidenceKind.OFFICIAL_DOCUMENT,
+        source_name="approved official test source",
+        source_record_id="official-test-record",
+        retrieved_at=datetime.now(UTC),
+        excerpt="Approved official test excerpt.",
+        content_hash="a" * 64,
+    )
+    report = report.model_copy(
+        update={"evidence": (*report.evidence, official)}
+    )
+    contract_prep = record.agent_results[2]
+    checklist = contract_prep.checklist_items[0].model_copy(
+        update={
+            "status": ChecklistStatus.REVIEW,
+            "evidence_ids": ("evidence-does-not-exist",),
+        }
+    )
+    results = (
+        *record.agent_results[:2],
+        contract_prep.model_copy(
+            update={
+                "evidence_ids": (official.evidence_id,),
+                "checklist_items": (checklist,),
+            }
+        ),
+        record.agent_results[3],
+    )
+    assert (
+        service._evidence_gate(report, results)
+        == "UNRESOLVED_CONTRACT_PREP_ITEM_EVIDENCE"
+    )
+
+    snapshot_evidence_id = next(
+        item.evidence_id
+        for item in report.evidence
+        if item.kind is EvidenceKind.TRANSACTION_RECORD
+    )
+    checklist = checklist.model_copy(
+        update={"evidence_ids": (snapshot_evidence_id,)}
+    )
+    results = (
+        *record.agent_results[:2],
+        contract_prep.model_copy(
+            update={
+                "evidence_ids": (official.evidence_id,),
+                "checklist_items": (checklist,),
+            }
+        ),
+        record.agent_results[3],
+    )
+    assert (
+        service._evidence_gate(report, results)
+        == "NON_OFFICIAL_CONTRACT_PREP_ITEM_EVIDENCE"
+    )
 
 def test_completed_fallback_status_is_report_bearing_and_retains_memory(
     client: TestClient, monkeypatch: pytest.MonkeyPatch,
