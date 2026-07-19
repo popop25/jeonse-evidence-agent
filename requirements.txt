@@ -1,0 +1,12 @@
+fastapi==0.139.2
+uvicorn==0.51.0
+streamlit==1.59.2
+langchain==0.3.30
+langgraph==0.3.34
+langchain-openai==0.3.35
+chromadb==0.6.3
+pydantic==2.13.4
+pydantic-settings==2.14.2
+httpx==0.28.1
+PyYAML==6.0.3
+pytest==8.4.2

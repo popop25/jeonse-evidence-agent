@@ -1,0 +1,33 @@
+manifest_version: official-evidence-corpus-v2
+profile_id: H-Azure-Chroma-v2
+index_version: immutable-official-evidence-v1
+redistribution_policy: "No official source text is bundled or redistributed. Product retrieval is unavailable until an authorized operator lawfully acquires and validates immutable artifacts."
+acquisition_gate:
+  status: authorized_operator_must_complete_before_product_indexing
+  required_metadata:
+    - source allowlist and license
+    - immutable content checksum
+    - as-of timestamp
+    - page range
+    - span offsets and span checksum
+sources:
+  - source_id: molit-official-guidance
+    publisher: 국토교통부
+    canonical_url: https://www.molit.go.kr/
+    license: authorized_operator_must_confirm_before_live_acquisition
+    license_status: authorized_operator_must_confirm_before_live_acquisition
+    terms_review_status: authorized_operator_must_confirm_before_live_acquisition
+  - source_id: hug-official-guidance
+    publisher: 주택도시보증공사
+    canonical_url: https://www.khug.or.kr/
+    license: authorized_operator_must_confirm_before_live_acquisition
+    license_status: authorized_operator_must_confirm_before_live_acquisition
+    terms_review_status: authorized_operator_must_confirm_before_live_acquisition
+  - source_id: klac-official-guidance
+    publisher: 대한법률구조공단
+    canonical_url: https://www.klac.or.kr/
+    license: authorized_operator_must_confirm_before_live_acquisition
+    license_status: authorized_operator_must_confirm_before_live_acquisition
+    terms_review_status: authorized_operator_must_confirm_before_live_acquisition
+records: []
+snapshot_notice: "Bundled JSON fixtures are synthetic test data, not copied official records. The empty records list is an explicit lawful-corpus acquisition gate."

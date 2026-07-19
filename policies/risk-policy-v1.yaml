@@ -1,0 +1,158 @@
+policy_id: risk-policy-v1
+status: v1-active
+owner: jeonse-decision-support
+version: 1
+effective_date: "2026-07-18"
+rationale: >-
+  Provide conservative, reproducible advisory signals from bounded public snapshots;
+  it is not a price appraisal, fraud determination, safety guarantee, or legal advice.
+provenance:
+  source_versions:
+    transaction_snapshot: versioned-official-transaction-snapshot
+    hug_snapshot: versioned-hug-incident-snapshot
+    official_documents: allowlisted-official-document-manifest
+  data_mode: snapshot_default_non_live
+  freshness:
+    transactions_months: 24
+    hug_months: 18
+  parameter_checksum:
+    algorithm: sha256
+    scope:
+      - signals.R-TX-COVERAGE
+      - signals.R-DEPOSIT-RATIO
+      - signals.R-HUG-REGION
+      - signals.R-SOURCE-CONFLICT
+      - overall_grade
+    canonicalization: UTF-8 encoded RFC 8785 canonical JSON of the scoped mapping, with lexicographically sorted object keys, no BOM, and no trailing newline.
+    canonical_input: '{"overall_grade":{"coverage_incomplete_when_any_signal_missing":true,"exact_low_grade_bearing_set":["R-DEPOSIT-RATIO","R-HUG-REGION"],"notes":["Transaction zero matches are no_match, not zero risk.","HUG zero incident rate with a positive denominator is a valid zero; a zero or missing denominator is unavailable.","Missing, stale, unsupported, external failure without validated fallback, source conflict, and insufficient population are unavailable.","High and medium take precedence over missing other grade-bearing signals; expose incomplete coverage."],"precedence":[{"schema_checksum_config_mapping_profile_or_corpus_breach":"failed_no_report"},{"any_valid_high":"high"},{"no_high_and_any_valid_medium":"medium"},{"both_exact_low_signals_fresh_sufficient_none":"low"},{"otherwise_required_grade_signal_unavailable":"unavailable"}]},"signals":{"R-DEPOSIT-RATIO":{"calculation":"listing_deposit_won / median(eligible_transaction_deposit_won)","limitation":"Price deviation is an advisory signal and is not a price appraisal or fraud determination.","role":"grade_bearing","thresholds":{"high":">= 1.00","medium":">= 0.90 and < 1.00","none":"< 0.90"}},"R-HUG-REGION":{"limitation":"Regional incident context must not be generalized to an individual listing.","percentile":{"formula":"Pq = x[ceil(q*n)-1]","inclusive_boundaries":true,"method":"nearest_rank","p50":0.5,"p75":0.75,"unavailable_when_p50_equals_p75":true},"population":{"minimum_rows":20,"nationwide_rows":true,"numeric_rate_required":true,"positive_denominator_required":true,"same_as_of":true,"same_fixed_period":true,"same_granularity":true,"same_metric_definition":true,"same_source":true,"target_included":true},"role":"grade_bearing","source":"HUG regional incident snapshot","thresholds":{"high":"target >= P75","medium":"target >= P50 and target < P75","none":"target < P50"}},"R-SOURCE-CONFLICT":{"applies_to":["R-TX-COVERAGE","R-DEPOSIT-RATIO"],"identity":{"fields":["dataset_id","dataset_version","stable_row_id"],"legacy_single_snapshot":true,"measured_fields_never_identity":["area_sqm","monthly_rent_won","deposit_won"]},"measurement_inequality":{"fields":["occurred_on","legal_dong","property_type","area_sqm","floor","deposit_won","monthly_rent_won"],"operator":"any normalized field value differs"},"normalization":{"area_sqm":"decimal square metres rounded to 2 decimal places","dates":"ISO-8601 calendar date","deposit_won":"integer won with no scaling","property_type":"allowlisted canonical Korean label","strings":"Unicode NFC, trim, collapse internal ASCII whitespace, casefold"},"reconciliation":{"cardinality_breach":"invalid_artifact","exact_duplicate":"retain one deterministic row","later_as_of_correction":"retain the latest declared snapshot row","mixed_identity_capability":"not_comparable","same_as_of_measurement_difference":"source_conflict","unit":"locator_to_measurement_multiset"},"role":"grade_signal_unavailable"},"R-TX-COVERAGE":{"eligibility":{"exclusive_area_tolerance_percent":10,"jeonse_only":{"cancelled":false,"deposit_won_positive":true,"monthly_rent_krw":0,"renewal":false},"minimum_comparables":3,"same_legal_dong":true,"supported_property_type":true,"supported_property_types":["apartment","아파트","연립·다세대","오피스텔"],"window_calendar_months":24},"role":"prerequisite_only","source":"official_transaction_snapshot","unavailable_when":["missing","stale","unsupported","insufficient_comparables","no_match"]}}}'
+    value: 8c2084d7ec26c7678622f6a0a92d2b449cb109bd3791af912eddaf6d6b6feadd
+advisory_scope:
+  statement: >-
+    This policy is information and inquiry preparation only. It does not verify registry,
+    building, or landlord records in real time and does not determine legal rights, fraud,
+    or safety.
+  exclusions:
+    - live_listing_crawling
+    - real_time_registry_building_or_landlord_verification
+    - legal_advice
+    - fraud_determination
+    - safety_guarantee
+signals:
+  R-TX-COVERAGE:
+    role: prerequisite_only
+    source: official_transaction_snapshot
+    eligibility:
+      window_calendar_months: 24
+      same_legal_dong: true
+      supported_property_type: true
+      supported_property_types:
+        - apartment
+        - 아파트
+        - 연립·다세대
+        - 오피스텔
+      exclusive_area_tolerance_percent: 10
+      jeonse_only:
+        monthly_rent_krw: 0
+        deposit_won_positive: true
+        cancelled: false
+        renewal: false
+      minimum_comparables: 3
+    unavailable_when:
+      - missing
+      - stale
+      - unsupported
+      - insufficient_comparables
+      - no_match
+  R-DEPOSIT-RATIO:
+    role: grade_bearing
+    calculation: listing_deposit_won / median(eligible_transaction_deposit_won)
+    thresholds:
+      none: "< 0.90"
+      medium: ">= 0.90 and < 1.00"
+      high: ">= 1.00"
+    limitation: Price deviation is an advisory signal and is not a price appraisal or fraud determination.
+  R-HUG-REGION:
+    role: grade_bearing
+    source: HUG regional incident snapshot
+    population:
+      same_source: true
+      same_as_of: true
+      same_fixed_period: true
+      same_metric_definition: true
+      same_granularity: true
+      nationwide_rows: true
+      target_included: true
+      numeric_rate_required: true
+      positive_denominator_required: true
+      minimum_rows: 20
+    percentile:
+      method: nearest_rank
+      formula: "Pq = x[ceil(q*n)-1]"
+      p50: 0.50
+      p75: 0.75
+      unavailable_when_p50_equals_p75: true
+      inclusive_boundaries: true
+    thresholds:
+      none: "target < P50"
+      medium: "target >= P50 and target < P75"
+      high: "target >= P75"
+    limitation: Regional incident context must not be generalized to an individual listing.
+  R-DOC-CHECK:
+    role: non_grade_bearing
+    source: allowlisted_official_documents
+    mapping: CHK-*
+    purpose: Supports action and question preparation only.
+  R-SOURCE-CONFLICT:
+    role: grade_signal_unavailable
+    applies_to:
+      - R-TX-COVERAGE
+      - R-DEPOSIT-RATIO
+    identity:
+      fields:
+        - dataset_id
+        - dataset_version
+        - stable_row_id
+      legacy_single_snapshot: true
+      measured_fields_never_identity:
+        - area_sqm
+        - monthly_rent_won
+        - deposit_won
+    reconciliation:
+      unit: locator_to_measurement_multiset
+      exact_duplicate: retain one deterministic row
+      later_as_of_correction: retain the latest declared snapshot row
+      same_as_of_measurement_difference: source_conflict
+      mixed_identity_capability: not_comparable
+      cardinality_breach: invalid_artifact
+    normalization:
+      strings: Unicode NFC, trim, collapse internal ASCII whitespace, casefold
+      dates: ISO-8601 calendar date
+      area_sqm: decimal square metres rounded to 2 decimal places
+      deposit_won: integer won with no scaling
+      property_type: allowlisted canonical Korean label
+    measurement_inequality:
+      fields:
+        - occurred_on
+        - legal_dong
+        - property_type
+        - area_sqm
+        - floor
+        - deposit_won
+        - monthly_rent_won
+      operator: any normalized field value differs
+overall_grade:
+  exact_low_grade_bearing_set:
+    - R-DEPOSIT-RATIO
+    - R-HUG-REGION
+  precedence:
+    - schema_checksum_config_mapping_profile_or_corpus_breach: failed_no_report
+    - any_valid_high: high
+    - no_high_and_any_valid_medium: medium
+    - both_exact_low_signals_fresh_sufficient_none: low
+    - otherwise_required_grade_signal_unavailable: unavailable
+  coverage_incomplete_when_any_signal_missing: true
+  notes:
+    - Transaction zero matches are no_match, not zero risk.
+    - HUG zero incident rate with a positive denominator is a valid zero; a zero or missing denominator is unavailable.
+    - Missing, stale, unsupported, external failure without validated fallback, source conflict, and insufficient population are unavailable.
+    - High and medium take precedence over missing other grade-bearing signals; expose incomplete coverage.

@@ -1,0 +1,57 @@
+{
+  "dataset_kind": "snapshot",
+  "snapshot_notice": "Synthetic, non-live advisory sample data. It is not a listing feed or verification source.",
+  "snapshot_as_of": "2026-06-30",
+  "provenance_id": "synthetic-catalog-v1",
+  "listings": [
+    {
+      "listing_id": "listing-mapogu-low",
+      "address_text": "서울특별시 마포구 서교동 101",
+      "deposit_won": 300000000,
+      "area_sqm": 59.5,
+      "contract_date": "2026-06-15",
+      "property_type": "아파트",
+      "floor": 8,
+      "built_year": 2012,
+      "evidence_id": "evidence-listing-mapogu-low",
+      "source_name": "Synthetic MVP catalog",
+      "source_record_id": "listing-mapogu-low",
+      "snapshot_as_of": "2026-06-30",
+      "provenance_id": "synthetic-catalog-v1-row-1",
+      "legal_dong": "서교동"
+    },
+    {
+      "listing_id": "listing-songpagu-medium",
+      "address_text": "서울특별시 송파구 잠실동 202",
+      "deposit_won": 405000000,
+      "area_sqm": 84.0,
+      "contract_date": "2026-06-15",
+      "property_type": "아파트",
+      "floor": 12,
+      "built_year": 2008,
+      "evidence_id": "evidence-listing-songpagu-medium",
+      "source_name": "Synthetic MVP catalog",
+      "source_record_id": "listing-songpagu-medium",
+      "snapshot_as_of": "2026-06-30",
+      "provenance_id": "synthetic-catalog-v1-row-2",
+      "legal_dong": "잠실동"
+    },
+    {
+      "listing_id": "listing-gangseogu-high",
+      "address_text": "서울특별시 강서구 화곡동 303",
+      "deposit_won": 510000000,
+      "area_sqm": 49.0,
+      "contract_date": "2026-06-15",
+      "property_type": "오피스텔",
+      "floor": 5,
+      "built_year": 2018,
+      "evidence_id": "evidence-listing-gangseogu-high",
+      "source_name": "Synthetic MVP catalog",
+      "source_record_id": "listing-gangseogu-high",
+      "snapshot_as_of": "2026-06-30",
+      "provenance_id": "synthetic-catalog-v1-row-3",
+      "legal_dong": "화곡동"
+    }
+  ],
+  "content_sha256": "cd302319884f2346d697cbd9af6a6e184b60f4c255d1607476b58869f3bacca8"
+}
