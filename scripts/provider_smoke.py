@@ -1,4 +1,4 @@
-"""Run a secret-safe Azure OpenAI and Chroma acceptance smoke."""
+"""Run a secret-safe Azure OpenAI and Chroma provider smoke test."""
 from __future__ import annotations
 
 import json
@@ -26,7 +26,7 @@ def main() -> None:
     if not vector or not all(isinstance(value, float) for value in vector):
         raise RuntimeError("Azure embedding smoke returned an invalid vector")
 
-    with tempfile.TemporaryDirectory(prefix="jeonse-chroma-smoke-") as directory:
+    with tempfile.TemporaryDirectory(prefix="provider-chroma-smoke-") as directory:
         client = chromadb.PersistentClient(path=directory)
         collection = client.get_or_create_collection(
             "provider-smoke",
@@ -36,7 +36,7 @@ def main() -> None:
             ids=["smoke-document"],
             documents=["전세 계약 전 공식 근거 확인"],
             embeddings=[vector],
-            metadatas=[{"profile": "H-Azure-Chroma-v1"}],
+            metadatas=[{"profile": "azure-openai-chroma-smoke-v1"}],
         )
         reopened = chromadb.PersistentClient(path=directory).get_collection(
             "provider-smoke"
@@ -47,7 +47,7 @@ def main() -> None:
 
     receipt = {
         "status": "PASS",
-        "profile": "H-Azure-Chroma-v1",
+        "profile": "azure-openai-chroma-smoke-v1",
         "chat": {
             "presentation_valid": bool(presentation.presentation.summary),
             "evidence_bound": presentation.presentation.evidence_ids == (evidence_id,),

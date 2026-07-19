@@ -13,10 +13,15 @@ htmlcov/
 !.env.example
 *.pem
 *.key
+*.p12
+*.pfx
+.envrc
+.streamlit/secrets.toml
 
 # Runtime data
 .chroma/
 chroma/
+data/chroma/
 artifacts/
 streamlit_logs/
 *.log

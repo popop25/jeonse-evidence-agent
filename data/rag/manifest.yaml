@@ -1,9 +1,9 @@
 manifest_version: official-evidence-corpus-v2
 profile_id: H-Azure-Chroma-v2
 index_version: immutable-official-evidence-v1
-redistribution_policy: "No official source text is bundled or redistributed. Product retrieval is unavailable until an authorized operator lawfully acquires and validates immutable artifacts."
+redistribution_policy: "No official source text is bundled or redistributed. Retrieval remains unavailable until an authorized operator lawfully acquires and validates immutable artifacts."
 acquisition_gate:
-  status: authorized_operator_must_complete_before_product_indexing
+  status: authorized_operator_must_complete_before_corpus_indexing
   required_metadata:
     - source allowlist and license
     - immutable content checksum

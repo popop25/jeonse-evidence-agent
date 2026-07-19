@@ -46,7 +46,7 @@ LangGraph는 다음 네 역할을 순차 실행합니다.
 
 저장소에 포함된 매물·거래·HUG fixture는 **합성 데이터**이며 실제 매물이나 공식 기록이 아닙니다. 공식 사이트 원문은 포함하거나 재배포하지 않습니다.
 
-`data/rag/manifest.yaml`의 공식 문서 레코드는 다음 검증을 요구합니다.
+`data/rag/manifest.yaml`은 의도적으로 공식 원문 레코드를 비워 둡니다. 운영자가 합법적으로 자료를 취득한 뒤 다음 메타데이터와 무결성을 검증한 레코드만 색인할 수 있습니다.
 
 - 출처 allowlist와 이용 조건
 - 불변 원문 SHA-256
@@ -54,7 +54,7 @@ LangGraph는 다음 네 역할을 순차 실행합니다.
 - 페이지 범위
 - span offset 및 span SHA-256
 
-승인된 레코드가 없으면 product RAG는 명시적으로 unavailable 상태가 됩니다. Azure 임베딩과 Chroma 경로는 `scripts/provider_smoke.py`로 별도 검증할 수 있습니다.
+승인·검증된 레코드가 없으면 product RAG는 명시적으로 unavailable 상태가 됩니다. Azure 임베딩과 Chroma 경로는 `scripts/provider_smoke.py`로 별도 검증할 수 있습니다.
 
 ## Quick start
 
@@ -62,8 +62,7 @@ LangGraph는 다음 네 역할을 순차 실행합니다.
 python -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -e . --no-deps
+python -m pip install -e ".[dev]"
 ```
 
 FastAPI를 실행합니다.
@@ -86,7 +85,7 @@ streamlit run streamlit_app.py \
 
 ## Optional Azure OpenAI configuration
 
-오프라인 합성 스냅샷 데모는 Azure 설정 없이 실행할 수 있습니다. 실제 Azure provider를 검증하려면 `.env.example`에 설명된 환경변수를 모두 설정합니다. 일부만 설정된 경우 애플리케이션은 시작을 거부합니다.
+오프라인 합성 스냅샷 데모는 Azure 설정 없이 실행할 수 있습니다. 실제 Azure provider를 검증하려면 `.env.example`에 명시된 6개 Azure 환경변수를 shell 또는 배포 설정으로 모두 export합니다. 일부만 설정된 경우 애플리케이션은 시작을 거부합니다.
 
 ```bash
 python scripts/provider_smoke.py
@@ -117,7 +116,7 @@ python -m pytest
 python -m compileall -q src streamlit_app.py scripts
 ```
 
-현재 검증 범위에는 단위·통합 테스트 123개, API lifecycle, 동시성·TTL·PII 경계, 정책 우선순위, RAG manifest 무결성, Structured Output 및 UI 계약이 포함됩니다.
+검증 범위에는 단위·통합 테스트, API lifecycle, 동시성·TTL·PII 경계, 정책 우선순위, RAG manifest 무결성, Structured Output 및 UI 계약이 포함됩니다.
 
 ![Browser demo](docs/assets/final-demo-composite.png)
 
